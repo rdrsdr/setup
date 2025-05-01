@@ -1,0 +1,11 @@
+# installs tailscale
+sudo curl -fsSL https://tailscale.com/install.sh | sh
+
+# turn it on 1st time (login)
+sudo tailscale up
+
+# set it to start at boot
+sudo systemctl enable tailscaled.service
+
+# set it not to expire
+https://login.tailscale.com/admin/machines

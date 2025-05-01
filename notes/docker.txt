@@ -1,0 +1,315 @@
+Docker
+
+
+Instalando no Linux:
+
+	curl https://get.docker.com | sh
+
+pra rodar sem sudo seguir esses passos:
+
+	https://docs.docker.com/engine/install/linux-postinstall/
+
+	. sudo usermod -aG docker $USER
+	. newgrp docker
+	. docker run hello-world
+
+
+- imagem: sistema estático persistido
+- container: instância de uma imagem sendo executada
+
+- docker images: lista imagens
+
+- docker ps: lista containers
+	. -a: exibe também containers encerrados
+
+- docker logs -f mysqlcontainer
+	. mostra os logs do container
+	. -f:
+		. follow: modo tail
+
+- docker inspect target
+	. exibe informações de target (imagens, containers, volumes ou redes)
+
+- docker exec -it mysqlcontainer bash
+	. acessa um processo/container sendo executado, associa ao bash e põe no modo interativo
+	. mysql -uroot -p
+		. acessa o mysql (senha: "segredo")
+	
+- docker run -d imgname
+	. -d: 
+		. detach, roda o container em background (não mostra o output do console)
+		. como não tem processo o container encerra automaticamente
+	. -it: 
+		. -i: modo interativo, a entrada do console vai para o container
+		. -t: tty (usou junto com i: -it)
+		. digitar 'exit' e <enter> encerra o container
+	. -v:
+		. especifica o volume
+	. --name containername:
+		. dá um nome para o container a ser criado
+	. --rm:
+		. remove o container assim que ele for finalizado
+
+- docker run -it --rm --name mycontainer -v "%PWD%/baguga:/home/ubuntu/baguga" -w "/home/ubuntu/baguga" ubuntu bash
+	. -w:
+		. working directory
+		. já entra nessa pasta
+
+- docker run -it --rm --name mycontainer -v "%PWD%/baguga:/home/node/baguga" -w "/home/node/baguga" ubuntu bash -c "node index"
+	. -c:
+		. comando a ser executado
+
+- docker run -it --rm --name mycontainer -v "%PWD%/baguga:/home/node/baguga" -w "/home/node/baguga" -p "8080:3000" node bash -c "npm install && node index"
+	. -p x:y:
+		. mapeia a porta x do host para a y do container
+
+- docker start containername
+	. reinicia o processo do container com o bash dentro, não encerra
+
+- docker exec -it containername bash
+	. executa um comando dentro do container, no caso, o bash
+	. se der exit não encerra pq não foi esse o processo que iniciou o container
+
+- docker stop containername:
+	. para um container enviando sinal para parada dos processos 
+
+- docker container rm -f $(docker container ls -qa)
+	. elimina todos os containers
+
+- docker kill containername:
+	. derruba o container na tora
+
+- docker rm containername:
+	. remove um container parado
+	. docker container ls -q -f status=exited: lista os ids dos containers finalizados
+	. docker rm $(docker container ls -q -f status=exited): encerra todos os containers com status finalizado
+
+- docker image prune
+	. limpa imagens sem nome (resíduos de criação de outras imagens)
+
+- docker system prune
+	. limpa tudo do docker! (dangling images, stopped containers, networks not used, unused build cache)
+
+- volumes:
+	. persistência
+	. mapear sistema de arquivos locais com o container
+
+- docker volume
+	. lista os comandos específicos para controle de volumes
+
+- docker volume ls
+	. -ls:
+		. lista os volumes
+
+- docker volume create myvolume
+	. -create
+		. cria um novo volume
+	. Local de montagem dos volumes no Windows:
+		. \\wsl$\docker-desktop\mnt\docker-desktop-disk\data\docker\volumes
+
+- docker volume -inspect myvolume
+	. -inspect
+		. exibe as configurações do volume
+
+- docker run -d --rm --name mysqlcontainer --link myserver -e MYSQL_ROOT_PASSWORD=segredo mysql
+	. cria um container baseado a imagem mysql
+	. iniciar com -d (detached, em background) e não -it (interativo) pq não funciona, pode ser necessidade de inicialização
+	. -e:
+		. variáveis de ambiente
+		. NO DOCKER HUB DE CADA IMAGEM TEM AS VARIÁVEIS PERMITIDAS!!!
+	. --link:
+		. nome DNS da máquina!!!
+	. docker exec -it mysqlcontainer bash
+		. pra acessar o console
+
+- docker run -d --rm --name mysqlcontainer -v "myvolume:/var/lib/mysql" -e MYSQL_ROOT_PASSWORD=segredo mysql
+	. -v:
+		.  montando um volume nomeado
+
+- docker run -d --rm --name mysqlcontainer -v "myvolume:/var/lib/mysql" --network=rodnet -e MYSQL_ROOT_PASSWORD=segredo mysql
+	. --network: especifica a rede que o contained deve se conectar
+
+- docker network
+	. lista os comandos disponíveis para rede
+
+- docker network create mynet
+	. create: cria uma rede isolada para containers (especificar na criação do container) 
+	. FUNCIONA COMO NOME DNS NA HORA DA CONEXÃO!!!
+
+- docker network connect rodnet mysqlcontainer
+	. connect: conecta um container à uma rede
+
+- docker inspect container
+	. verificar quais redes um container está conectado
+
+- docker network disconnect bridge mysqlcontainer
+	. desconecta um container de uma rede
+
+- docker login
+	. faz login pra poder subir uma imagem
+
+- docker push [nome imagem completo]
+	. sobe imagem no docker hub
+
+- docker tag [nome imagem existente] [nome adicional imagem]
+	. adiciona um nome a uma imagem existente (ex: latest)
+	. fazer novo push com a nova tag (como as camadas são iguais, não envia imagem)
+
+--- Criando uma imagem
+	. cria um arquivo "Dockerfile" (desse jeito mesmo, sem extensão)
+	. docker build -t myimg .
+
+
+--- Aula docker do careca
+
+- matar todos os containers de uma vez:
+	. docker container ls -aq -> lista todos os ids dos containers
+	. docker container rm -f $(docker container ls -aq)
+
+
+--- reiniciando um container parado
+https://stackoverflow.com/questions/21928691/how-to-continue-a-docker-container-which-has-exited
+
+# criando o container
+docker run -it --name <container-name> ubuntu /bin/bash
+
+ou apenas 
+
+docker create -it --name <container-name> ubuntu /bin/bash
+
+# retomando o container (em 1 comando)
+docker start -i <name/id>
+ou
+docker start -ai <name/id>  # não percebi diferença com o "a" (attach to container)
+
+Obs: se der exit o container não cai (retomar com um exec?)
+
+# retomando o container (em 2 comandos)
+docker start <name/id>
+docker exec -it <name/id> /bin/sh
+
+
+--- How to Limit Docker Memory and CPU Usage
+https://phoenixnap.com/kb/docker-memory-and-cpu-limit
+
+	- memory
+	docker run -dit --memory="512m" nginx
+	docker run -dit --memory="512m" --memory-swap="1g" nginx
+	docker run -dit --memory="1g" --memory-reservation="512m" nginx
+
+	. Verify Docker Memory Usage
+	docker stats
+
+	- cpu
+	. The --cpus option provides a way to limit how many CPU cores a container can use
+	docker run -dit --cpus="1.0" nginx
+
+	. the --cpu-shares option to control the share of CPU cycles available to a container  (default = 1024)
+	docker run -dit --cpu-shares="2048" nginx
+	
+	. Verify Docker CPU Usage
+	docker inspect [container-name] | grep NanoCpus
+
+https://docs.docker.com/engine/containers/resource_constraints/
+	
+	. If you have 1 CPU, each of the following commands guarantees the container at most 50% of the CPU every second.
+
+	docker run -it --cpus=".5" ubuntu /bin/bash
+
+	. Which is the equivalent to manually specifying --cpu-period and --cpu-quota;
+
+ 	docker run -it --cpu-period=100000 --cpu-quota=50000 ubuntu /bin/bash
+
+	
+
+---​ Why Do Containers Still Exist After an Image Exits?
+https://forums.docker.com/t/why-do-containers-still-exist-after-an-image-exits/54110
+
+"The confusion comes from the command docker run or docker container run, which both creates a container and also starts it. A better way to learn the concept is to use the docker create or docker container create command to create a container, and the docker start or docker container start command to start it."
+
+
+--- Como criar imagens Docker de forma correta
+https://youtu.be/SQRWc1_gqXQ?list=PLZfrXScDmaiNw3k2-TdfML9GhpsmOlhM3
+
+- Vendo o histórico da imagem (&t=2306)
+	docker image history [imagename]
+
+- WORKDIR (&t=3335)
+	WORKDIR [path] é o mesmo que mkdir [path] + cd [path] 
+
+- Boas práticas de criação de imagens (&t=4049)
+	0. expor a porta na criação da imagem (expose)
+
+	1. colocar cada processo em seu próprio container
+		. quando vc for trabalhar com orquestração (Kubernetes, Swarm, etc.) pra ter escalabiliade, resiliência, etc., a arquitetura estará enrijecida se todos os processos estiverem num mesmo container
+
+	2. utilizar imagens oficiais
+		. imagens oficiais não aparece o namespace
+		. como faz pra não aparecer o namespace?
+
+	3. criar imagens versionadas e especificar a latest
+		. como especificar a latest? Sobe duas vezes?
+		. sempre que a tag não for especificada será baixada a latest
+		. NÃO use "latest" em arquivo de Dockerfile (pra baixar, não pra gerar a sua), especifique a versão
+
+	4. usar imagens mais enxutas
+		. ex: node:18.12.1-alpine3.16
+		. uso de alpine caiu de 1gb para 200mb!
+
+	5. aproveitar camadas (cache)
+		. ex: copiar pacotes primeiro e só depois copiar o fonte (se copiar o fonte 1º, toda vez que o fonte for alterado os pacotes precisarão ser baixados novamente, desperdiçando o cache)
+
+	6. explorar todas as opções do Dockerfile (&t=5006)
+
+	7. usar arquivo .dockerignore sempre que necessário
+		. ex: pasta nodemodules (pasta node local de cache de libs)
+			node_modules/
+		. ex: não enviar um arquivo com credenciais 
+
+- MULTISTAGE (https://youtu.be/SQRWc1_gqXQ?t=5300)
+	. linguagens compiladas precisam de um sdk pesado
+	. imagens com sdk são grandes (gb) e após compilado o sdk não é utilizado na produção
+	. não distribuir imagem de sdk, usa a imagem pra gerar a build e copia o executável para gerar outra imagem mais leve de produção
+	. multistage: múltiplos estágios de construção da imagem
+		- faz construções intermediárias, usando uma imagem pro processo de compilação, gera o artefato, gera uma nova imagem, copia esse artefato fazendo uma imagem mais otimizada
+	. exemplos específicos para java:
+		- https://hub.docker.com/_/eclipse-temurin
+		
+			# Example of custom Java runtime using jlink in a multi-stage container build
+			FROM eclipse-temurin:21 as jre-build
+
+			# Create a custom Java runtime
+			RUN $JAVA_HOME/bin/jlink \
+					 --add-modules java.base \
+					 --strip-debug \
+					 --no-man-pages \
+					 --no-header-files \
+					 --compress=2 \
+					 --output /javaruntime
+
+			# Define your base image
+			FROM debian:buster-slim
+			ENV JAVA_HOME=/opt/java/openjdk
+			ENV PATH "${JAVA_HOME}/bin:${PATH}"
+			COPY --from=jre-build /javaruntime $JAVA_HOME
+
+			# Continue with your application deployment
+			RUN mkdir /opt/app
+			COPY japp.jar /opt/app
+			CMD ["java", "-jar", "/opt/app/japp.jar"]
+		
+		- https://hub.docker.com/r/ubuntu/jre
+
+			FROM ubuntu:22.04 AS builder
+			RUN apt-get update && apt-get install -y openjdk-8-jdk
+			WORKDIR /app
+			ADD HelloWorld.java .
+
+			RUN javac -source 8 -target 8 HelloWorld.java -d .
+
+			FROM ubuntu/jre:8-22.04_edge
+
+			WORKDIR /
+			COPY --from=builder /app/HelloWorld.class .
+
+			CMD [ "HelloWorld" ]

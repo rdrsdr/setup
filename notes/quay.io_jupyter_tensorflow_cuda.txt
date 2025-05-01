@@ -1,0 +1,25 @@
+# quay.io/jupyter/tensorflow-notebook:cuda-latest
+
+conda install -c conda-forge -y pandas
+conda install -c conda-forge -y scikit-learn
+conda install -c conda-forge -y nltk
+conda install -c conda-forge -y plotly
+pip install statsforecast
+pip install mlforecast
+pip install neuralforecast
+
+# running original image
+docker run --rm -it --gpus=all -p 8888:8888 -v "/mnt/c/Users/RodrigoSodre/docker/ai/:/home/jovyan/ai" -w "/home/jovyan/ai" quay.io/jupyter/tensorflow-notebook:cuda-latest
+
+# building
+docker build -t rdrsdr/pytorch-jupyter:nixtla .
+
+# running built image
+docker run --rm -it --name pytorchgpunixtla --gpus=all -p 8888:8888 -v "/mnt/c/dev/docker/ai/:/home/jovyan/ai" -w "/home/jovyan/ai" rdrsdr/pytorchgpu:nixtla
+
+# gpu monitoring
+docker exec -it pytorchgpunixtla bash
+./usage.sh > res.csv &
+nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used,power.draw --format=csv --loop=1
+
+docker run --rm -it --name pytorch-jupter-nixtla -p 8888:8888 -v "/mnt/c/dev/docker/2025/:/home/jovyan/ai" -w "/home/jovyan/ai" rdrsdr/pytorch-jupyter:nixtla

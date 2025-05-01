@@ -1,0 +1,33 @@
+# https://www.geeksforgeeks.org/how-to-install-nvidia-driver-on-ubuntu/
+sudo apt update
+sudo apt upgrade
+sudo apt install linux-headers-$(uname -r)
+lspci | grep NVIDIA
+sudo add-apt-repository ppa:graphics-drivers/ppa
+ubuntu-drivers devices
+sudo apt install nvidia-driver-560
+sudo reboot
+nvidia-smi
+
+# se der merda, desinstale:
+	sudo apt remove --purge nvidia*
+	sudo apt autoremove
+
+# https://forums.developer.nvidia.com/t/nvidia-smi-no-devices-were-found-p620-ubuntu-22-04/269181
+#	"use a dedicated installation method on Ubuntu instead of autoinstall"
+#	"remove any currently installed NVIDIA drivers and kernel modules and install either through apt"
+#	"using one of the proprietary NVIDIA drivers. NOT Open and NOT Server"
+	
+# nvidia-smi output:
+#	"NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver." => wrong driver, unistall and try another
+#	"no card detected" => card REALLY ISN'T connected, connect propertly
+
+# installing nvtop
+sudo apt-get -y install nvtop
+
+# limiting max power
+sudo nvidia-smi -pm 1
+sudo nvidia-smi -pl 120
+
+# monitoring resources
+nvidia-smi --query-gpu=timestamp,utilization.gpu,memory.used,power.draw --format=csv --loop=60

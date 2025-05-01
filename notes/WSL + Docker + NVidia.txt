@@ -1,0 +1,120 @@
+NVidia + WSL + Docker
+
+[Update 03/02/2025] https://learn.microsoft.com/en-us/windows/wsl/tutorials/gpu-compute
+
+GPU support in Docker Desktop
+- https://docs.docker.com/desktop/features/gpu/
+	. for docker windows
+	. don't install windows version, "very poor advice" (https://youtu.be/CO43b6XWHNI?t=572)
+	. install docker inside wsl
+
+CUDA on WSL User Guide
+- https://docs.nvidia.com/cuda/wsl-user-guide/index.html
+	. Install NVIDIA Driver for GPU Support
+		. Install NVIDIA GeForce Game Ready or NVIDIA RTX Quadro Windows 11 display driver on your system with a compatible GeForce or NVIDIA RTX/Quadro card from https://www.nvidia.com/Download/index.aspx
+		. Note: This is the only driver you need to install. Do not install any Linux display driver in WSL
+	. 3. CUDA Support for WSL 2
+		. The latest NVIDIA Windows GPU Driver will fully support WSL 2. 
+		. With CUDA support in the driver, existing applications (compiled elsewhere on a Linux system for the same target GPU) can run UNMODIFIED within the WSL environment.
+		. To compile new CUDA applications, a CUDA Toolkit for Linux x86 is needed.
+
+NVIDIA Container Toolkit
+- https://github.com/NVIDIA/nvidia-container-toolkit
+
+Installing the NVIDIA Container Toolkit
+- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+
+
+Jupyter Docker Images
+- https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-tensorflow-notebook
+	CUDA enabled variants
+		We provide CUDA accelerated versions of the pytorch-notebook and tensorflow-notebook images. Prepend a CUDA prefix (versioned prefix like cuda12- for pytorch-notebook or just cuda- for tensorflow-notebook) to the image tag to allow PyTorch or TensorFlow operations to use compatible NVIDIA GPUs for accelerated computation. We only build pytorch-notebook for last two major versions of CUDA. The tensorflow-notebook image only supports the latest CUDA version listed in the officially tested build configurations.
+
+		For example, you could use the image
+			quay.io/jupyter/pytorch-notebook:cuda12-python-3.11.8
+			or
+			quay.io/jupyter/tensorflow-notebook:cuda-latest.
+
+Jupyter Docker Hub Images
+- https://hub.docker.com/search?q=jupyter
+
+GPU Jupyter
+- https://github.com/iot-salzburg/gpu-jupyter
+
+
+--- 
+
+Passo a passo:
+
+1. Instalar driver no Windows
+	CUDA on WSL User Guide
+	- https://docs.nvidia.com/cuda/wsl-user-guide/index.html
+
+	2.1. Step 1: Install NVIDIA Driver for GPU Support
+		. https://www.nvidia.com/Download/index.aspx
+
+2. Instalar wsl
+	2.2. Step 2: Install WSL
+		. wsl.exe --install
+		. wsl.exe --update
+	2.3. Step 3: Set Up a Linux Development Environment
+		. wsl.exe
+
+3. Install Docker Engine on Ubuntu
+	Install using the apt repository
+		1. Set up Docker's apt repository
+
+			# Add Docker's official GPG key:
+			sudo apt-get update
+			sudo apt-get install ca-certificates curl
+			sudo install -m 0755 -d /etc/apt/keyrings
+			sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+			sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+			# Add the repository to Apt sources:
+			echo \
+			  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+			  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+			  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+			sudo apt-get update
+			
+		2. Install the Docker packages
+		
+			sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+		
+		3. Verify that the installation is successful by running the hello-world image:
+		
+			sudo docker run hello-world
+
+4. Instalar NVIDIA Container Toolkit na imagem WSL
+	- https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+	
+	Installing with Apt
+		1. Configure the production repository:
+
+			curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
+			  && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+				sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+				sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+		2. Update the packages list from the repository:
+
+			sudo apt-get update
+		
+		3. Install the NVIDIA Container Toolkit packages:
+
+			sudo apt-get install -y nvidia-container-toolkit
+
+		4. Reboot
+
+5. Baixar notebooks jupyter com suporte a gpu
+	- https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-tensorflow-notebook
+	
+	quay.io/jupyter/pytorch-notebook:cuda12-python-3.11.8
+	quay.io/jupyter/tensorflow-notebook:cuda-latest
+	
+	docker run --rm -it --gpus=all -p 8888:8888 -v "/mnt/c/Users/dev/docker/ai/:/home/jovyan/ai" -w "/home/jovyan/ai" quay.io/jupyter/tensorflow-notebook:cuda-latest
+	docker run --rm -it --gpus=all -p 8888:8888 -v "/mnt/c/Users/dev/docker/ai/:/home/jovyan/ai" -w "/home/jovyan/ai"quay.io/jupyter/pytorch-notebook:cuda12-python-3.11.8
+
+
+

@@ -1,0 +1,10 @@
+https://gist.github.com/wklchris/6e7fac67d8a22a348f3e6b6c75c0836e
+
+remote server:
+jupyter notebook --NotebookApp.allow_origin='*' --ip 0.0.0.0 --no-browser &
+
+local:
+ssh -NL localhost:8888:monolith:8888 hal@monolith
+
+Open browser on your local machine, input localhost:8888, and copy the token from the step 1.
+If you don't want a token, set a password instead using jupyter notebook password.
