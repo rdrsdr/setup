@@ -3,6 +3,9 @@
 git config --global user.name [username]
 git config --global user.email [git private email: https://github.com/settings/emails]
 
+# crie a base direto no GitHub e vincule com seu perfil/token com:
+git clone https://[username]:[token]@github.com/[username]/[repository]
+
 #adicionando/removendo arquivos ao projeto
 git add .
 
@@ -21,7 +24,7 @@ git branch
 #setando o token de acesso para o commit
 #https://www.youtube.com/watch?v=IuiH6cBtc58
 #git remote set-url origin https://[username]:[token]@github.com/[username]/[repository]
-git clone https://[username]:[token]@github.com/[username]/[repository]
+
 git push
 
 #mostra o que foi alterado desde o último commit
